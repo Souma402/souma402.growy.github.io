@@ -16,98 +16,112 @@
         /* スクロールバー非表示 */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* 画面の縦幅が狭い場合の調整 */
+        @media (max-height: 700px) {
+            .control-btn { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; font-size: 0.875rem !important; }
+            .compact-margin { margin-bottom: 0.5rem !important; }
+            .compact-text { font-size: 1.25rem !important; }
+        }
+        @media (max-height: 600px) {
+            .control-btn { padding-top: 0.25rem !important; padding-bottom: 0.25rem !important; font-size: 0.75rem !important; }
+            .compact-margin { margin-bottom: 0.25rem !important; }
+        }
     </style>
 </head>
-<body class="bg-green-50 text-gray-800 w-full min-h-screen flex flex-col m-0 p-0 overflow-x-hidden">
+<body class="bg-green-50 text-gray-800 w-full h-screen flex flex-col m-0 p-0 overflow-hidden relative">
 
-    <!-- メインコンテンツ領域（下部タブの分だけpaddingを設定） -->
-    <main class="flex-1 w-full pb-20">
+    <!-- トースト通知コンテナ (成功時の通知用) -->
+    <div id="toast-container" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-2 w-11/12 max-w-sm pointer-events-none"></div>
+
+    <!-- メインコンテンツ領域 -->
+    <main class="flex-1 w-full relative">
         
         <!-- ==================== ホームタブ ==================== -->
-        <section id="tab-home" class="w-full min-h-screen p-4 flex flex-col items-center justify-center">
-            <h1 class="text-3xl font-bold text-green-700 mb-2">Growy 🌱</h1>
-            <p class="text-gray-500 mb-8">今日の目標達成度</p>
+        <section id="tab-home" class="absolute inset-0 w-full h-full p-4 flex flex-col items-center justify-center">
+            <h1 class="compact-text text-2xl sm:text-3xl font-bold text-green-700 mb-1 compact-margin">Growy 🌱</h1>
+            <p class="text-xs sm:text-sm text-gray-500 mb-4 sm:mb-6 compact-margin">今日の目標達成度</p>
 
             <!-- 円形プログレスバー＆タイマー -->
-            <div class="relative w-64 h-64 sm:w-80 sm:h-80 mb-8 flex items-center justify-center">
+            <div class="relative w-48 h-48 sm:w-64 sm:h-64 mb-4 sm:mb-6 flex items-center justify-center shrink-0 compact-margin">
                 <svg class="w-full h-full" width="100%" height="100%" viewBox="0 0 200 200">
                     <circle class="text-green-200 stroke-current" stroke-width="12" cx="100" cy="100" r="90" fill="transparent"></circle>
                     <circle id="progress-circle" class="text-green-500 progress-ring__circle stroke-current" stroke-width="12" stroke-linecap="round" cx="100" cy="100" r="90" fill="transparent" stroke-dasharray="565.48" stroke-dashoffset="565.48"></circle>
                 </svg>
-                <!-- 中央のタイマー表示 (分:秒) -->
+                <!-- 中央のタイマー表示 -->
                 <div class="absolute flex flex-col items-center">
-                    <span id="timer-display" class="text-5xl sm:text-6xl font-bold text-gray-800">00:00</span>
+                    <span id="timer-display" class="text-4xl sm:text-5xl font-bold text-gray-800">00:00</span>
                 </div>
             </div>
 
-            <!-- 科目選択 -->
-            <div class="w-full max-w-md px-4 mb-6">
-                <label class="block text-sm font-bold text-gray-700 mb-2">学習する科目</label>
-                <select id="timer-subject" class="w-full p-3 rounded-lg border border-green-300 bg-white focus:outline-none focus:ring-2 focus:ring-green-500">
-                    <option value="国語">国語</option>
-                    <option value="数学">数学</option>
-                    <option value="英語">英語</option>
-                    <option value="理科">理科</option>
-                    <option value="社会">社会</option>
-                    <option value="副教科">副教科</option>
-                    <option value="その他">その他</option>
-                </select>
+            <!-- 科目選択 (横並び丸ボタン) -->
+            <div class="w-full max-w-xs sm:max-w-sm mb-4 sm:mb-6 shrink compact-margin">
+                <label class="block text-xs font-bold text-gray-700 mb-2">学習する科目</label>
+                <div id="subject-container" class="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+                    <button class="subject-btn shrink-0 px-4 py-2 rounded-full bg-green-500 text-white font-bold text-sm shadow-sm transition" data-subject="国語">国語</button>
+                    <button class="subject-btn shrink-0 px-4 py-2 rounded-full bg-white text-gray-600 font-bold text-sm shadow-sm transition" data-subject="数学">数学</button>
+                    <button class="subject-btn shrink-0 px-4 py-2 rounded-full bg-white text-gray-600 font-bold text-sm shadow-sm transition" data-subject="英語">英語</button>
+                    <button class="subject-btn shrink-0 px-4 py-2 rounded-full bg-white text-gray-600 font-bold text-sm shadow-sm transition" data-subject="理科">理科</button>
+                    <button class="subject-btn shrink-0 px-4 py-2 rounded-full bg-white text-gray-600 font-bold text-sm shadow-sm transition" data-subject="社会">社会</button>
+                    <button class="subject-btn shrink-0 px-4 py-2 rounded-full bg-white text-gray-600 font-bold text-sm shadow-sm transition" data-subject="副教科">副教科</button>
+                    <button class="subject-btn shrink-0 px-4 py-2 rounded-full bg-white text-gray-600 font-bold text-sm shadow-sm transition" data-subject="その他">その他</button>
+                </div>
             </div>
 
             <!-- コントロールボタン -->
-            <div class="w-full max-w-md px-4 flex flex-col gap-4">
-                <button id="btn-start" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl text-xl transition shadow-lg">
+            <div class="w-full max-w-xs sm:max-w-sm flex flex-col gap-2 sm:gap-3 shrink">
+                <button id="btn-start" class="control-btn w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 sm:py-4 rounded-full text-lg sm:text-xl transition shadow-lg">
                     始める
                 </button>
-                <div id="active-controls" class="hidden w-full flex flex-col gap-4">
-                    <button id="btn-pause" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-4 rounded-xl text-xl transition shadow-md">
-                        一時停止
-                    </button>
-                    <button id="btn-finish" class="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-4 rounded-xl text-xl transition shadow-md">
-                        終わる
+                
+                <div id="active-controls" class="hidden w-full flex-col gap-2 sm:gap-3">
+                    <div class="flex gap-2">
+                        <button id="btn-home-pause" class="control-btn w-1/2 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 sm:py-4 rounded-full text-sm sm:text-base transition shadow-md">
+                            一時停止
+                        </button>
+                        <button id="btn-home-finish" class="control-btn w-1/2 bg-green-700 hover:bg-green-800 text-white font-bold py-3 sm:py-4 rounded-full text-sm sm:text-base transition shadow-md">
+                            終わる
+                        </button>
+                    </div>
+                    <button id="btn-go-focus" class="control-btn w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 sm:py-4 rounded-full text-sm sm:text-base transition shadow-lg">
+                        集中画面にする
                     </button>
                 </div>
             </div>
         </section>
 
         <!-- ==================== レベルタブ ==================== -->
-        <section id="tab-level" class="hidden w-full min-h-screen p-4 flex flex-col items-center">
-            <h2 class="text-2xl font-bold text-green-700 mt-8 mb-6">あなたの成長</h2>
+        <section id="tab-level" class="hidden absolute inset-0 w-full h-full p-4 flex flex-col items-center justify-center">
+            <h2 class="compact-text text-xl sm:text-2xl font-bold text-green-700 mb-4 compact-margin">あなたの成長</h2>
             
-            <div class="bg-white w-full max-w-2xl rounded-2xl shadow-md p-8 flex flex-col items-center text-center">
-                <!-- 植物のアイコン表示 -->
-                <div id="plant-icon" class="text-8xl mb-6 transition-transform hover:scale-110">🌱</div>
-                
-                <h3 class="text-3xl font-bold text-gray-800 mb-2">Level <span id="level-display">1</span></h3>
-                <p id="plant-name" class="text-green-600 font-semibold mb-6">双葉</p>
+            <div class="bg-white w-full max-w-md rounded-3xl shadow-md p-6 sm:p-8 flex flex-col items-center text-center shrink">
+                <div id="plant-icon" class="text-6xl sm:text-8xl mb-4 transition-transform hover:scale-110 compact-margin">🌱</div>
+                <h3 class="text-xl sm:text-3xl font-bold text-gray-800 mb-1">Level <span id="level-display">1</span></h3>
+                <p id="plant-name" class="text-green-600 font-semibold mb-4 sm:mb-6 compact-margin">双葉</p>
 
-                <div class="w-full text-left mb-2 flex justify-between text-sm text-gray-600 font-bold">
+                <div class="w-full text-left mb-1 flex justify-between text-xs sm:text-sm text-gray-600 font-bold">
                     <span>現在のレベル進捗</span>
                     <span id="level-progress-text">0 / 60 分</span>
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-4 mb-2">
-                    <div id="level-progress-bar" class="bg-green-500 h-4 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                <div class="w-full bg-gray-100 rounded-full h-3 sm:h-4 mb-2">
+                    <div id="level-progress-bar" class="bg-green-500 h-3 sm:h-4 rounded-full transition-all duration-1000" style="width: 0%"></div>
                 </div>
                 <p class="text-xs text-gray-500 text-right w-full">次のレベルまであと <span id="mins-to-next">60</span> 分</p>
             </div>
         </section>
 
         <!-- ==================== 記録タブ ==================== -->
-        <section id="tab-record" class="hidden w-full min-h-screen p-4 flex flex-col items-center">
-            <div class="w-full max-w-3xl">
-                <h2 class="text-2xl font-bold text-green-700 mt-8 mb-4">学習の記録</h2>
-
-                <!-- 本日の学習時間 -->
-                <div class="bg-green-600 text-white w-full rounded-2xl shadow-md p-6 mb-8 text-center">
-                    <p class="text-sm opacity-90 mb-1">本日の学習時間</p>
-                    <p class="text-4xl font-bold"><span id="today-time">0</span> <span class="text-xl font-normal">分</span></p>
+        <section id="tab-record" class="hidden absolute inset-0 w-full h-full p-4 flex flex-col items-center overflow-y-auto no-scrollbar pb-6">
+            <div class="w-full max-w-xl">
+                <h2 class="text-xl sm:text-2xl font-bold text-green-700 mt-2 mb-4 text-center">学習の記録</h2>
+                <div class="bg-green-600 text-white w-full rounded-3xl shadow-md p-5 mb-6 text-center shrink-0">
+                    <p class="text-xs sm:text-sm opacity-90 mb-1">本日の学習時間</p>
+                    <p class="text-3xl sm:text-4xl font-bold"><span id="today-time">0</span> <span class="text-lg sm:text-xl font-normal">分</span></p>
                 </div>
-
-                <!-- 過去の記録リスト -->
-                <div class="bg-white w-full rounded-2xl shadow-md p-6 mb-8">
-                    <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">学習履歴</h3>
-                    <ul id="log-list" class="space-y-3 max-h-80 overflow-y-auto no-scrollbar">
-                        <!-- 履歴がJSで追加されます -->
+                <div class="bg-white w-full rounded-3xl shadow-md p-5 mb-4 shrink-0">
+                    <h3 class="text-base sm:text-lg font-bold text-gray-800 mb-3 border-b pb-2">学習履歴</h3>
+                    <ul id="log-list" class="space-y-3">
+                        <!-- JSで追加 -->
                     </ul>
                 </div>
             </div>
@@ -115,59 +129,169 @@
     </main>
 
     <!-- ==================== ボトムナビゲーション ==================== -->
-    <nav class="fixed bottom-0 w-full h-20 bg-white border-t border-gray-200 flex justify-around items-center z-50 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+    <nav class="w-full h-[60px] sm:h-[70px] bg-white border-t border-gray-100 flex justify-around items-center z-40 shadow-[0_-2px_15px_rgba(0,0,0,0.03)] shrink-0">
         <button onclick="switchTab('home')" class="nav-btn flex flex-col items-center text-green-600 w-1/3" data-tab="home">
-            <svg class="w-7 h-7 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-            <span class="text-xs font-bold">ホーム</span>
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+            <span class="text-[10px] font-bold">ホーム</span>
         </button>
         <button onclick="switchTab('level')" class="nav-btn flex flex-col items-center text-gray-400 hover:text-green-500 w-1/3 transition" data-tab="level">
-            <svg class="w-7 h-7 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-            <span class="text-xs font-bold">レベル</span>
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            <span class="text-[10px] font-bold">レベル</span>
         </button>
         <button onclick="switchTab('record')" class="nav-btn flex flex-col items-center text-gray-400 hover:text-green-500 w-1/3 transition" data-tab="record">
-            <svg class="w-7 h-7 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-            <span class="text-xs font-bold">記録</span>
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+            <span class="text-[10px] font-bold">記録</span>
         </button>
     </nav>
 
+    <!-- ==================== 集中画面 ==================== -->
+    <div id="focus-screen" class="fixed inset-0 bg-slate-900 z-50 hidden flex flex-col justify-center items-center px-6">
+        <div class="mb-8 flex flex-col items-center">
+            <span class="text-gray-400 text-sm mb-4 font-bold tracking-widest uppercase">Focus Mode</span>
+            <span id="focus-timer-display" class="text-7xl sm:text-9xl font-bold text-white tracking-wider">00:00</span>
+        </div>
+        <div class="w-full max-w-sm flex flex-col gap-3">
+            <button id="btn-focus-pause" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-4 rounded-full text-xl transition shadow-lg">
+                一時停止
+            </button>
+            <button id="btn-focus-finish" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-full text-xl transition shadow-lg">
+                終わる
+            </button>
+            <button id="btn-focus-back" class="w-full bg-transparent border-2 border-gray-600 text-gray-300 hover:bg-gray-800 font-bold py-4 rounded-full text-lg transition mt-4">
+                戻る
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== カスタム確認モーダル (削除用) ==================== -->
+    <div id="confirm-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[100] hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-sm text-center shadow-xl transform transition-all duration-200 scale-95 opacity-0" id="confirm-modal-content">
+            <h3 class="text-lg font-bold text-gray-800 mb-2">確認</h3>
+            <p class="text-gray-600 text-sm mb-6">この記録を削除しますか？</p>
+            <div class="flex gap-3">
+                <button id="btn-cancel-delete" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-full transition">キャンセル</button>
+                <button id="btn-confirm-delete" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-full transition shadow-md">削除する</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 1分未満時のお知らせモーダル ==================== -->
+    <div id="alert-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[110] hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-sm text-center shadow-xl transform transition-all duration-200 scale-95 opacity-0" id="alert-modal-content">
+            <h3 class="text-lg font-bold text-gray-800 mb-2">お知らせ</h3>
+            <p class="text-gray-600 text-sm mb-6">学習時間が1分未満のため<br>記録されませんでした。</p>
+            <button id="btn-alert-ok" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-full transition shadow-md">OK</button>
+        </div>
+    </div>
+
     <!-- ==================== JavaScript ==================== -->
     <script>
-        /* --- 状態管理 --- */
         let logs = JSON.parse(localStorage.getItem('growy_logs')) || [];
         let timerInterval;
         let seconds = 0;
         let isRunning = false;
+        
+        // 科目選択のステート管理
+        let selectedSubject = "国語";
+        let isSubjectSelectionDisabled = false;
 
-        /* --- DOM要素 --- */
-        // ホーム
+        // DOM要素: ホーム
         const timerDisplay = document.getElementById('timer-display');
         const btnStart = document.getElementById('btn-start');
-        const btnPause = document.getElementById('btn-pause');
-        const btnFinish = document.getElementById('btn-finish');
         const activeControls = document.getElementById('active-controls');
+        const btnHomePause = document.getElementById('btn-home-pause');
+        const btnHomeFinish = document.getElementById('btn-home-finish');
+        const btnGoFocus = document.getElementById('btn-go-focus');
         const progressCircle = document.getElementById('progress-circle');
-        const timerSubject = document.getElementById('timer-subject');
+        const subjectBtns = document.querySelectorAll('.subject-btn');
 
-        // レベル
+        // DOM要素: 集中画面
+        const focusScreen = document.getElementById('focus-screen');
+        const focusTimerDisplay = document.getElementById('focus-timer-display');
+        const btnFocusPause = document.getElementById('btn-focus-pause');
+        const btnFocusFinish = document.getElementById('btn-focus-finish');
+        const btnFocusBack = document.getElementById('btn-focus-back');
+
+        // DOM要素: 他タブ
         const levelDisplay = document.getElementById('level-display');
         const plantIcon = document.getElementById('plant-icon');
         const plantName = document.getElementById('plant-name');
         const levelProgressBar = document.getElementById('level-progress-bar');
         const levelProgressText = document.getElementById('level-progress-text');
         const minsToNext = document.getElementById('mins-to-next');
-
-        // 記録
         const logList = document.getElementById('log-list');
         const todayTimeDisplay = document.getElementById('today-time');
 
-        // 初期化処理
+        // DOM要素: トースト＆モーダル
+        const toastContainer = document.getElementById('toast-container');
+        const confirmModal = document.getElementById('confirm-modal');
+        const confirmContent = document.getElementById('confirm-modal-content');
+        const alertModal = document.getElementById('alert-modal');
+        const alertContent = document.getElementById('alert-modal-content');
+        let deleteTargetId = null;
+
         function init() {
             updateRecords();
             updateLevel();
-            updateCircleProgress(); // 初期リング描画
+            updateCircleProgress();
         }
 
-        /* --- タブ切り替え --- */
+        /* --- 科目選択UIの処理 --- */
+        subjectBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (isSubjectSelectionDisabled) return; // 計測中は変更不可
+                
+                // すべてのボタンを非アクティブ状態にする
+                subjectBtns.forEach(b => {
+                    b.classList.remove('bg-green-500', 'text-white');
+                    b.classList.add('bg-white', 'text-gray-600');
+                });
+                
+                // クリックされたボタンをアクティブにする
+                btn.classList.remove('bg-white', 'text-gray-600');
+                btn.classList.add('bg-green-500', 'text-white');
+                selectedSubject = btn.dataset.subject;
+            });
+        });
+
+        /* --- カスタム通知機能（トースト：成功時のみ） --- */
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'px-4 py-3 rounded-full shadow-lg text-white font-bold text-sm sm:text-base transform transition-all duration-300 opacity-0 -translate-y-5 text-center pointer-events-auto bg-green-600';
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            
+            requestAnimationFrame(() => {
+                toast.classList.remove('opacity-0', '-translate-y-5');
+                toast.classList.add('opacity-100', 'translate-y-0');
+            });
+            
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', '-translate-y-5');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        /* --- お知らせモーダル（1分未満時） --- */
+        function openAlertModal() {
+            alertModal.classList.remove('hidden');
+            alertModal.classList.add('flex');
+            requestAnimationFrame(() => {
+                alertContent.classList.remove('scale-95', 'opacity-0');
+                alertContent.classList.add('scale-100', 'opacity-100');
+            });
+        }
+        
+        document.getElementById('btn-alert-ok').addEventListener('click', () => {
+            alertContent.classList.remove('scale-100', 'opacity-100');
+            alertContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                alertModal.classList.add('hidden');
+                alertModal.classList.remove('flex');
+            }, 200);
+        });
+
         function switchTab(tabName) {
             document.getElementById('tab-home').classList.add('hidden');
             document.getElementById('tab-level').classList.add('hidden');
@@ -189,7 +313,6 @@
             if (tabName === 'level') updateLevel();
         }
 
-        /* --- タイマー処理 --- */
         function formatTime(totalSeconds) {
             const m = Math.floor(totalSeconds / 60);
             const s = totalSeconds % 60;
@@ -198,45 +321,21 @@
             return `${mStr}:${sStr}`;
         }
 
-        // ホーム画面中央の円形プログレスバーの更新
-        // ここでは1時間(3600秒)を1周とする
         function updateCircleProgress() {
             const radius = progressCircle.r.baseVal.value;
             const circumference = radius * 2 * Math.PI;
             progressCircle.style.strokeDasharray = `${circumference} ${circumference}`;
-            
-            // 3600秒で1周
             const progress = (seconds % 3600) / 3600;
             const offset = circumference - progress * circumference;
             progressCircle.style.strokeDashoffset = offset;
         }
 
         function updateTimerUI() {
-            timerDisplay.textContent = formatTime(seconds);
+            const timeStr = formatTime(seconds);
+            timerDisplay.textContent = timeStr;
+            focusTimerDisplay.textContent = timeStr;
             updateCircleProgress();
         }
-
-        btnStart.addEventListener('click', () => {
-            btnStart.classList.add('hidden');
-            activeControls.classList.remove('hidden');
-            activeControls.classList.add('flex');
-            startTimer();
-        });
-
-        btnPause.addEventListener('click', () => {
-            if (isRunning) {
-                clearInterval(timerInterval);
-                isRunning = false;
-                btnPause.textContent = "再開";
-                btnPause.classList.replace('bg-yellow-500', 'bg-blue-500');
-                btnPause.classList.replace('hover:bg-yellow-600', 'hover:bg-blue-600');
-            } else {
-                startTimer();
-                btnPause.textContent = "一時停止";
-                btnPause.classList.replace('bg-blue-500', 'bg-yellow-500');
-                btnPause.classList.replace('hover:bg-blue-600', 'hover:bg-yellow-600');
-            }
-        });
 
         function startTimer() {
             isRunning = true;
@@ -246,48 +345,111 @@
             }, 1000);
         }
 
-        btnFinish.addEventListener('click', () => {
+        function togglePause() {
+            if (isRunning) {
+                clearInterval(timerInterval);
+                isRunning = false;
+                
+                btnHomePause.textContent = "再開";
+                btnHomePause.classList.replace('bg-yellow-500', 'bg-blue-500');
+                btnHomePause.classList.replace('hover:bg-yellow-600', 'hover:bg-blue-600');
+                
+                btnFocusPause.textContent = "再開";
+                btnFocusPause.classList.replace('bg-yellow-600', 'bg-blue-600');
+                btnFocusPause.classList.replace('hover:bg-yellow-500', 'hover:bg-blue-500');
+            } else {
+                startTimer();
+                
+                btnHomePause.textContent = "一時停止";
+                btnHomePause.classList.replace('bg-blue-500', 'bg-yellow-500');
+                btnHomePause.classList.replace('hover:bg-blue-600', 'hover:bg-yellow-600');
+                
+                btnFocusPause.textContent = "一時停止";
+                btnFocusPause.classList.replace('bg-blue-600', 'bg-yellow-600');
+                btnFocusPause.classList.replace('hover:bg-blue-500', 'hover:bg-yellow-500');
+            }
+        }
+
+        function finishTimer() {
             clearInterval(timerInterval);
             isRunning = false;
 
             if (seconds >= 60) {
                 const mins = Math.floor(seconds / 60);
-                const subject = timerSubject.value;
                 const now = new Date();
                 
                 logs.unshift({
                     id: Date.now(),
-                    subject: subject,
+                    subject: selectedSubject,
                     minutes: mins,
                     date: now.toISOString()
                 });
                 localStorage.setItem('growy_logs', JSON.stringify(logs));
                 
-                alert(`${mins}分（${subject}）記録しました！`);
+                showToast(`${mins}分（${selectedSubject}）記録しました！`);
             } else {
-                // 1分未満の記録は保存しない
-                alert('学習時間が1分未満のため記録されませんでした。');
+                // 1分未満の場合は中央にお知らせモーダルを表示
+                openAlertModal();
             }
 
-            // タイマーとUIをリセット
+            // タイマーリセット
             seconds = 0;
             updateTimerUI();
-            progressCircle.style.strokeDashoffset = progressCircle.r.baseVal.value * 2 * Math.PI; // リングリセット
+            progressCircle.style.strokeDashoffset = progressCircle.r.baseVal.value * 2 * Math.PI;
             
-            // ボタンを初期状態に戻す
+            // UIを初期状態に戻す
             btnStart.classList.remove('hidden');
             activeControls.classList.add('hidden');
             activeControls.classList.remove('flex');
+            isSubjectSelectionDisabled = false; // 科目選択ロック解除
             
-            btnPause.textContent = "一時停止";
-            btnPause.classList.replace('bg-blue-500', 'bg-yellow-500');
-            btnPause.classList.replace('hover:bg-blue-600', 'hover:bg-yellow-600');
+            // 科目ボタンの見た目を有効化風に戻す（透明度）
+            document.getElementById('subject-container').style.opacity = '1';
+            
+            btnHomePause.textContent = "一時停止";
+            btnHomePause.classList.replace('bg-blue-500', 'bg-yellow-500');
+            btnHomePause.classList.replace('hover:bg-blue-600', 'hover:bg-yellow-600');
+            btnFocusPause.textContent = "一時停止";
+            btnFocusPause.classList.replace('bg-blue-600', 'bg-yellow-600');
+            btnFocusPause.classList.replace('hover:bg-blue-500', 'hover:bg-yellow-500');
 
             updateRecords();
             updateLevel();
+            closeFocusScreen();
+        }
+
+        // イベントリスナー
+        btnStart.addEventListener('click', () => {
+            btnStart.classList.add('hidden');
+            activeControls.classList.remove('hidden');
+            activeControls.classList.add('flex');
+            
+            // 計測中は科目選択をロックし、少し薄くして視覚的に示す
+            isSubjectSelectionDisabled = true;
+            document.getElementById('subject-container').style.opacity = '0.6';
+            
+            openFocusScreen();
+            if (!isRunning) startTimer();
         });
 
-        /* --- 記録画面処理 --- */
+        btnGoFocus.addEventListener('click', openFocusScreen);
+        btnFocusBack.addEventListener('click', closeFocusScreen);
+
+        function openFocusScreen() {
+            focusScreen.classList.remove('hidden');
+            focusScreen.classList.add('flex');
+        }
+        function closeFocusScreen() {
+            focusScreen.classList.add('hidden');
+            focusScreen.classList.remove('flex');
+        }
+
+        btnHomePause.addEventListener('click', togglePause);
+        btnFocusPause.addEventListener('click', togglePause);
+
+        btnHomeFinish.addEventListener('click', finishTimer);
+        btnFocusFinish.addEventListener('click', finishTimer);
+
         function isToday(dateString) {
             const date = new Date(dateString);
             const today = new Date();
@@ -301,52 +463,68 @@
             let todayMins = 0;
 
             if (logs.length === 0) {
-                logList.innerHTML = '<li class="text-center text-gray-400 py-4">まだ記録がありません</li>';
+                logList.innerHTML = '<li class="text-center text-gray-400 py-4 text-sm">まだ記録がありません</li>';
             }
 
             logs.forEach(log => {
-                if (isToday(log.date)) {
-                    todayMins += log.minutes;
-                }
-
+                if (isToday(log.date)) todayMins += log.minutes;
                 const li = document.createElement('li');
-                li.className = "flex justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-100";
-                
+                li.className = "flex justify-between items-center bg-gray-50 p-4 rounded-2xl border border-gray-100";
                 const dateObj = new Date(log.date);
                 const dateStr = `${dateObj.getMonth()+1}/${dateObj.getDate()} ${dateObj.getHours().toString().padStart(2,'0')}:${dateObj.getMinutes().toString().padStart(2,'0')}`;
                 
                 li.innerHTML = `
                     <div class="flex flex-col">
                         <span class="text-sm font-bold text-green-700">${log.subject}</span>
-                        <span class="text-xs text-gray-500">${dateStr}</span>
+                        <span class="text-[10px] sm:text-xs text-gray-500">${dateStr}</span>
                     </div>
-                    <div class="flex items-center gap-4">
-                        <span class="text-lg font-bold text-gray-800">${log.minutes}<span class="text-xs font-normal"> 分</span></span>
-                        <button onclick="deleteLog(${log.id})" class="text-red-400 hover:text-red-600 p-1">
+                    <div class="flex items-center gap-3">
+                        <span class="text-base sm:text-lg font-bold text-gray-800">${log.minutes}<span class="text-xs font-normal"> 分</span></span>
+                        <button onclick="openConfirmModal(${log.id})" class="text-red-400 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
                     </div>
                 `;
                 logList.appendChild(li);
             });
-
             todayTimeDisplay.textContent = todayMins;
         }
 
-        function deleteLog(id) {
-            if (confirm("この記録を削除しますか？")) {
-                logs = logs.filter(log => log.id !== id);
+        function openConfirmModal(id) {
+            deleteTargetId = id;
+            confirmModal.classList.remove('hidden');
+            confirmModal.classList.add('flex');
+            requestAnimationFrame(() => {
+                confirmContent.classList.remove('scale-95', 'opacity-0');
+                confirmContent.classList.add('scale-100', 'opacity-100');
+            });
+        }
+
+        function closeConfirmModal() {
+            confirmContent.classList.remove('scale-100', 'opacity-100');
+            confirmContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                confirmModal.classList.add('hidden');
+                confirmModal.classList.remove('flex');
+                deleteTargetId = null;
+            }, 200);
+        }
+
+        document.getElementById('btn-cancel-delete').addEventListener('click', closeConfirmModal);
+
+        document.getElementById('btn-confirm-delete').addEventListener('click', () => {
+            if (deleteTargetId !== null) {
+                logs = logs.filter(log => log.id !== deleteTargetId);
                 localStorage.setItem('growy_logs', JSON.stringify(logs));
                 updateRecords();
                 updateLevel();
+                showToast('記録を削除しました');
+                closeConfirmModal();
             }
-        }
+        });
 
-        /* --- レベル処理 --- */
         function updateLevel() {
             const totalMins = logs.reduce((acc, log) => acc + log.minutes, 0);
-            
-            // 累計1時間(60分)ごとに1レベルアップ
             const level = Math.floor(totalMins / 60) + 1;
             const currentLevelMins = totalMins % 60;
             const remainingMins = 60 - currentLevelMins;
@@ -357,27 +535,17 @@
             levelProgressBar.style.width = `${progressPercent}%`;
             minsToNext.textContent = remainingMins;
 
-            // 植物の成長段階（レベルによる変化）
-            let icon = "🌱";
-            let name = "双葉";
-            
-            if (level >= 100) {
-                icon = "🌳✨"; name = "世界樹";
-            } else if (level >= 50) {
-                icon = "🌲"; name = "大木";
-            } else if (level >= 20) {
-                icon = "🌳"; name = "成木";
-            } else if (level >= 10) {
-                icon = "🌸"; name = "開花";
-            } else if (level >= 5) {
-                icon = "🌿"; name = "若葉";
-            }
+            let icon = "🌱"; let name = "双葉";
+            if (level >= 100) { icon = "🌳✨"; name = "世界樹"; }
+            else if (level >= 50) { icon = "🌲"; name = "大木"; }
+            else if (level >= 20) { icon = "🌳"; name = "成木"; }
+            else if (level >= 10) { icon = "🌸"; name = "開花"; }
+            else if (level >= 5) { icon = "🌿"; name = "若葉"; }
 
             plantIcon.textContent = icon;
             plantName.textContent = name;
         }
 
-        // 実行
         init();
     </script>
 </body>
