@@ -1,1 +1,384 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Growy - 勉強時間管理アプリ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* カスタムスタイル・アニメーション */
+        body { font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif; }
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.5s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        /* スクロールバー非表示 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-green-50 text-gray-800 w-full min-h-screen flex flex-col m-0 p-0 overflow-x-hidden">
 
+    <!-- メインコンテンツ領域（下部タブの分だけpaddingを設定） -->
+    <main class="flex-1 w-full pb-20">
+        
+        <!-- ==================== ホームタブ ==================== -->
+        <section id="tab-home" class="w-full min-h-screen p-4 flex flex-col items-center justify-center">
+            <h1 class="text-3xl font-bold text-green-700 mb-2">Growy 🌱</h1>
+            <p class="text-gray-500 mb-8">今日の目標達成度</p>
+
+            <!-- 円形プログレスバー＆タイマー -->
+            <div class="relative w-64 h-64 sm:w-80 sm:h-80 mb-8 flex items-center justify-center">
+                <svg class="w-full h-full" width="100%" height="100%" viewBox="0 0 200 200">
+                    <circle class="text-green-200 stroke-current" stroke-width="12" cx="100" cy="100" r="90" fill="transparent"></circle>
+                    <circle id="progress-circle" class="text-green-500 progress-ring__circle stroke-current" stroke-width="12" stroke-linecap="round" cx="100" cy="100" r="90" fill="transparent" stroke-dasharray="565.48" stroke-dashoffset="565.48"></circle>
+                </svg>
+                <!-- 中央のタイマー表示 (分:秒) -->
+                <div class="absolute flex flex-col items-center">
+                    <span id="timer-display" class="text-5xl sm:text-6xl font-bold text-gray-800">00:00</span>
+                </div>
+            </div>
+
+            <!-- 科目選択 -->
+            <div class="w-full max-w-md px-4 mb-6">
+                <label class="block text-sm font-bold text-gray-700 mb-2">学習する科目</label>
+                <select id="timer-subject" class="w-full p-3 rounded-lg border border-green-300 bg-white focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <option value="国語">国語</option>
+                    <option value="数学">数学</option>
+                    <option value="英語">英語</option>
+                    <option value="理科">理科</option>
+                    <option value="社会">社会</option>
+                    <option value="副教科">副教科</option>
+                    <option value="その他">その他</option>
+                </select>
+            </div>
+
+            <!-- コントロールボタン -->
+            <div class="w-full max-w-md px-4 flex flex-col gap-4">
+                <button id="btn-start" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl text-xl transition shadow-lg">
+                    始める
+                </button>
+                <div id="active-controls" class="hidden w-full flex flex-col gap-4">
+                    <button id="btn-pause" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-4 rounded-xl text-xl transition shadow-md">
+                        一時停止
+                    </button>
+                    <button id="btn-finish" class="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-4 rounded-xl text-xl transition shadow-md">
+                        終わる
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== レベルタブ ==================== -->
+        <section id="tab-level" class="hidden w-full min-h-screen p-4 flex flex-col items-center">
+            <h2 class="text-2xl font-bold text-green-700 mt-8 mb-6">あなたの成長</h2>
+            
+            <div class="bg-white w-full max-w-2xl rounded-2xl shadow-md p-8 flex flex-col items-center text-center">
+                <!-- 植物のアイコン表示 -->
+                <div id="plant-icon" class="text-8xl mb-6 transition-transform hover:scale-110">🌱</div>
+                
+                <h3 class="text-3xl font-bold text-gray-800 mb-2">Level <span id="level-display">1</span></h3>
+                <p id="plant-name" class="text-green-600 font-semibold mb-6">双葉</p>
+
+                <div class="w-full text-left mb-2 flex justify-between text-sm text-gray-600 font-bold">
+                    <span>現在のレベル進捗</span>
+                    <span id="level-progress-text">0 / 60 分</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-4 mb-2">
+                    <div id="level-progress-bar" class="bg-green-500 h-4 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                </div>
+                <p class="text-xs text-gray-500 text-right w-full">次のレベルまであと <span id="mins-to-next">60</span> 分</p>
+            </div>
+        </section>
+
+        <!-- ==================== 記録タブ ==================== -->
+        <section id="tab-record" class="hidden w-full min-h-screen p-4 flex flex-col items-center">
+            <div class="w-full max-w-3xl">
+                <h2 class="text-2xl font-bold text-green-700 mt-8 mb-4">学習の記録</h2>
+
+                <!-- 本日の学習時間 -->
+                <div class="bg-green-600 text-white w-full rounded-2xl shadow-md p-6 mb-8 text-center">
+                    <p class="text-sm opacity-90 mb-1">本日の学習時間</p>
+                    <p class="text-4xl font-bold"><span id="today-time">0</span> <span class="text-xl font-normal">分</span></p>
+                </div>
+
+                <!-- 過去の記録リスト -->
+                <div class="bg-white w-full rounded-2xl shadow-md p-6 mb-8">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">学習履歴</h3>
+                    <ul id="log-list" class="space-y-3 max-h-80 overflow-y-auto no-scrollbar">
+                        <!-- 履歴がJSで追加されます -->
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ==================== ボトムナビゲーション ==================== -->
+    <nav class="fixed bottom-0 w-full h-20 bg-white border-t border-gray-200 flex justify-around items-center z-50 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+        <button onclick="switchTab('home')" class="nav-btn flex flex-col items-center text-green-600 w-1/3" data-tab="home">
+            <svg class="w-7 h-7 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+            <span class="text-xs font-bold">ホーム</span>
+        </button>
+        <button onclick="switchTab('level')" class="nav-btn flex flex-col items-center text-gray-400 hover:text-green-500 w-1/3 transition" data-tab="level">
+            <svg class="w-7 h-7 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            <span class="text-xs font-bold">レベル</span>
+        </button>
+        <button onclick="switchTab('record')" class="nav-btn flex flex-col items-center text-gray-400 hover:text-green-500 w-1/3 transition" data-tab="record">
+            <svg class="w-7 h-7 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+            <span class="text-xs font-bold">記録</span>
+        </button>
+    </nav>
+
+    <!-- ==================== JavaScript ==================== -->
+    <script>
+        /* --- 状態管理 --- */
+        let logs = JSON.parse(localStorage.getItem('growy_logs')) || [];
+        let timerInterval;
+        let seconds = 0;
+        let isRunning = false;
+
+        /* --- DOM要素 --- */
+        // ホーム
+        const timerDisplay = document.getElementById('timer-display');
+        const btnStart = document.getElementById('btn-start');
+        const btnPause = document.getElementById('btn-pause');
+        const btnFinish = document.getElementById('btn-finish');
+        const activeControls = document.getElementById('active-controls');
+        const progressCircle = document.getElementById('progress-circle');
+        const timerSubject = document.getElementById('timer-subject');
+
+        // レベル
+        const levelDisplay = document.getElementById('level-display');
+        const plantIcon = document.getElementById('plant-icon');
+        const plantName = document.getElementById('plant-name');
+        const levelProgressBar = document.getElementById('level-progress-bar');
+        const levelProgressText = document.getElementById('level-progress-text');
+        const minsToNext = document.getElementById('mins-to-next');
+
+        // 記録
+        const logList = document.getElementById('log-list');
+        const todayTimeDisplay = document.getElementById('today-time');
+
+        // 初期化処理
+        function init() {
+            updateRecords();
+            updateLevel();
+            updateCircleProgress(); // 初期リング描画
+        }
+
+        /* --- タブ切り替え --- */
+        function switchTab(tabName) {
+            document.getElementById('tab-home').classList.add('hidden');
+            document.getElementById('tab-level').classList.add('hidden');
+            document.getElementById('tab-record').classList.add('hidden');
+            
+            document.getElementById('tab-' + tabName).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if(btn.dataset.tab === tabName) {
+                    btn.classList.add('text-green-600');
+                    btn.classList.remove('text-gray-400');
+                } else {
+                    btn.classList.add('text-gray-400');
+                    btn.classList.remove('text-green-600');
+                }
+            });
+
+            if (tabName === 'record') updateRecords();
+            if (tabName === 'level') updateLevel();
+        }
+
+        /* --- タイマー処理 --- */
+        function formatTime(totalSeconds) {
+            const m = Math.floor(totalSeconds / 60);
+            const s = totalSeconds % 60;
+            const mStr = m >= 100 ? m.toString() : m.toString().padStart(2, '0');
+            const sStr = s.toString().padStart(2, '0');
+            return `${mStr}:${sStr}`;
+        }
+
+        // ホーム画面中央の円形プログレスバーの更新
+        // ここでは1時間(3600秒)を1周とする
+        function updateCircleProgress() {
+            const radius = progressCircle.r.baseVal.value;
+            const circumference = radius * 2 * Math.PI;
+            progressCircle.style.strokeDasharray = `${circumference} ${circumference}`;
+            
+            // 3600秒で1周
+            const progress = (seconds % 3600) / 3600;
+            const offset = circumference - progress * circumference;
+            progressCircle.style.strokeDashoffset = offset;
+        }
+
+        function updateTimerUI() {
+            timerDisplay.textContent = formatTime(seconds);
+            updateCircleProgress();
+        }
+
+        btnStart.addEventListener('click', () => {
+            btnStart.classList.add('hidden');
+            activeControls.classList.remove('hidden');
+            activeControls.classList.add('flex');
+            startTimer();
+        });
+
+        btnPause.addEventListener('click', () => {
+            if (isRunning) {
+                clearInterval(timerInterval);
+                isRunning = false;
+                btnPause.textContent = "再開";
+                btnPause.classList.replace('bg-yellow-500', 'bg-blue-500');
+                btnPause.classList.replace('hover:bg-yellow-600', 'hover:bg-blue-600');
+            } else {
+                startTimer();
+                btnPause.textContent = "一時停止";
+                btnPause.classList.replace('bg-blue-500', 'bg-yellow-500');
+                btnPause.classList.replace('hover:bg-blue-600', 'hover:bg-yellow-600');
+            }
+        });
+
+        function startTimer() {
+            isRunning = true;
+            timerInterval = setInterval(() => {
+                seconds++;
+                updateTimerUI();
+            }, 1000);
+        }
+
+        btnFinish.addEventListener('click', () => {
+            clearInterval(timerInterval);
+            isRunning = false;
+
+            if (seconds >= 60) {
+                const mins = Math.floor(seconds / 60);
+                const subject = timerSubject.value;
+                const now = new Date();
+                
+                logs.unshift({
+                    id: Date.now(),
+                    subject: subject,
+                    minutes: mins,
+                    date: now.toISOString()
+                });
+                localStorage.setItem('growy_logs', JSON.stringify(logs));
+                
+                alert(`${mins}分（${subject}）記録しました！`);
+            } else {
+                // 1分未満の記録は保存しない
+                alert('学習時間が1分未満のため記録されませんでした。');
+            }
+
+            // タイマーとUIをリセット
+            seconds = 0;
+            updateTimerUI();
+            progressCircle.style.strokeDashoffset = progressCircle.r.baseVal.value * 2 * Math.PI; // リングリセット
+            
+            // ボタンを初期状態に戻す
+            btnStart.classList.remove('hidden');
+            activeControls.classList.add('hidden');
+            activeControls.classList.remove('flex');
+            
+            btnPause.textContent = "一時停止";
+            btnPause.classList.replace('bg-blue-500', 'bg-yellow-500');
+            btnPause.classList.replace('hover:bg-blue-600', 'hover:bg-yellow-600');
+
+            updateRecords();
+            updateLevel();
+        });
+
+        /* --- 記録画面処理 --- */
+        function isToday(dateString) {
+            const date = new Date(dateString);
+            const today = new Date();
+            return date.getDate() === today.getDate() &&
+                   date.getMonth() === today.getMonth() &&
+                   date.getFullYear() === today.getFullYear();
+        }
+
+        function updateRecords() {
+            logList.innerHTML = '';
+            let todayMins = 0;
+
+            if (logs.length === 0) {
+                logList.innerHTML = '<li class="text-center text-gray-400 py-4">まだ記録がありません</li>';
+            }
+
+            logs.forEach(log => {
+                if (isToday(log.date)) {
+                    todayMins += log.minutes;
+                }
+
+                const li = document.createElement('li');
+                li.className = "flex justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-100";
+                
+                const dateObj = new Date(log.date);
+                const dateStr = `${dateObj.getMonth()+1}/${dateObj.getDate()} ${dateObj.getHours().toString().padStart(2,'0')}:${dateObj.getMinutes().toString().padStart(2,'0')}`;
+                
+                li.innerHTML = `
+                    <div class="flex flex-col">
+                        <span class="text-sm font-bold text-green-700">${log.subject}</span>
+                        <span class="text-xs text-gray-500">${dateStr}</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span class="text-lg font-bold text-gray-800">${log.minutes}<span class="text-xs font-normal"> 分</span></span>
+                        <button onclick="deleteLog(${log.id})" class="text-red-400 hover:text-red-600 p-1">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                `;
+                logList.appendChild(li);
+            });
+
+            todayTimeDisplay.textContent = todayMins;
+        }
+
+        function deleteLog(id) {
+            if (confirm("この記録を削除しますか？")) {
+                logs = logs.filter(log => log.id !== id);
+                localStorage.setItem('growy_logs', JSON.stringify(logs));
+                updateRecords();
+                updateLevel();
+            }
+        }
+
+        /* --- レベル処理 --- */
+        function updateLevel() {
+            const totalMins = logs.reduce((acc, log) => acc + log.minutes, 0);
+            
+            // 累計1時間(60分)ごとに1レベルアップ
+            const level = Math.floor(totalMins / 60) + 1;
+            const currentLevelMins = totalMins % 60;
+            const remainingMins = 60 - currentLevelMins;
+            const progressPercent = (currentLevelMins / 60) * 100;
+
+            levelDisplay.textContent = level;
+            levelProgressText.textContent = `${currentLevelMins} / 60 分`;
+            levelProgressBar.style.width = `${progressPercent}%`;
+            minsToNext.textContent = remainingMins;
+
+            // 植物の成長段階（レベルによる変化）
+            let icon = "🌱";
+            let name = "双葉";
+            
+            if (level >= 100) {
+                icon = "🌳✨"; name = "世界樹";
+            } else if (level >= 50) {
+                icon = "🌲"; name = "大木";
+            } else if (level >= 20) {
+                icon = "🌳"; name = "成木";
+            } else if (level >= 10) {
+                icon = "🌸"; name = "開花";
+            } else if (level >= 5) {
+                icon = "🌿"; name = "若葉";
+            }
+
+            plantIcon.textContent = icon;
+            plantName.textContent = name;
+        }
+
+        // 実行
+        init();
+    </script>
+</body>
+</html>
